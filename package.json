@@ -1,0 +1,16 @@
+{
+  "name": "aws-lambda-convert",
+  "version": "1.0.0",
+  "description": "",
+  "main": "convert.js",
+  "dependencies": {
+    "aws-sdk": "^2.6.11",
+    "gm": "^1.23.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
