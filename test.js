@@ -2,21 +2,31 @@
 const fs = require('fs')
 var child = require('child_process')
 
-spawn = require('child_process').spawn,
-    ls    = spawn('convert', ['/tmp/inputsvg', '-flatten', '/tmp/output.svg.jpg']);
+var fileType = 'pdf'
 
-ls.stdout.on('data', function (data) {
-  console.log('stdout: ' + data.toString());
-});
+spawn = require('child_process').spawn
 
-ls.stderr.on('data', function (data) {
-  console.log('stderr: ' + data.toString());
-});
+if (fileType == 'pdf'){
 
-ls.on('exit', function (code) {
-  console.log('child process exited with code ' + code.toString());
-});
+  var convertChild = child.spawn('gs', ['-sDEVICE=jpeg', '-o', '/tmp/output.jpg', '-dGraphicsAlphaBits=4', '-dTextAlphaBits=4', '-sPageList=1', '/tmp/input.pdf'])
 
+} else {
+
+  var convertChild = child.spawn('convert', ['/tmp/input.' + fileType+'[0]', '-background', 'white', '-alpha', 'remove', '-resize', '1024x1024>', '/tmp/output.jpg'])
+
+}
+
+convertChild.stdout.on('data', function (data) {
+  console.log('stdout: ' + data.toString())
+})
+
+convertChild.stderr.on('data', function (data) {
+  console.log('stderr: ' + data.toString())
+})
+
+convertChild.on('exit', function (code) {
+  console.log('child process exited with code ' + code.toString())
+})
 
 // var myREPL = child.exec('convert /tmsg  werewr -flatten /tmp/output.svg.jpg')
 //

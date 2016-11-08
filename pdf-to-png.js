@@ -50,20 +50,25 @@ exports.handler = function (event, context) {
     console.time('convert')
     console.log('convert')
 
-    convertChild = child.spawn('./convert', ['/tmp/input.' + fileType, '-flatten', '/tmp/output.jpg']);
+    if (fileType == 'pdf'){
+      var convertChild = child.spawn('./gs', ['-sDEVICE=jpeg', '-o', '/tmp/output.jpg', '-dGraphicsAlphaBits=4', '-dTextAlphaBits=4', '-sPageList=1', '/tmp/input.pdf'])
+    } else {
+      var convertChild = child.spawn('./convert', ['/tmp/input.' + fileType +'[0]', '-background', 'white', '-alpha', 'remove', '-resize', '1024x1024>', '/tmp/output.jpg'])
+    }
 
     convertChild.stdout.on('data', function (data) {
-      console.log('stdout: ' + data.toString());
-    });
+      console.log('stdout: ' + data.toString())
+    })
 
     convertChild.stderr.on('data', function (data) {
-      console.log('stderr: ' + data.toString());
-    });
+      console.log('stderr: ' + data.toString())
+    })
 
     convertChild.on('exit', function (code) {
-      console.log('child process exited with code ' + code.toString());
-      upload()
-    });
+      console.log('child process exited with code ' + code.toString())
+      var error = (code !== 0)
+      upload(error)
+    })
 
     // var myREPL = child.exec('convert /tmp/input.' + fileType + ' -flatten /tmp/output.jpg')
     //
@@ -91,17 +96,16 @@ exports.handler = function (event, context) {
     //   })
   }
 
-  function upload () {
+  function upload (error) {
     console.time('upload')
+    console.log('upload (' + error + ')')
     var newKey = srcKey.split('/')
     newKey.shift() // remove 'pdf/'
     newKey.unshift('out')
     newKey = newKey.join('/') + '.thumbnail.' + newFiletype.toLowerCase()
     console.log(`upload to path : ${newKey}`)
-    // Stream the transformed image to a different folder.
-
-    // Read in the file, convert it to base64, store to S3
-    var fileStream = fs.createReadStream('/tmp/output.jpg')
+    var filepath = (error) ? 'file-icon.png' : '/tmp/output.jpg'
+    var fileStream = fs.createReadStream(filepath)
     fileStream.on('error', function (err) {
       if (err) { throw err }
     })
@@ -112,7 +116,9 @@ exports.handler = function (event, context) {
         Body: fileStream,
         ContentType: newFiletype
       }, function (err) {
-        fs.unlinkSync('/tmp/output.jpg')
+        try {
+          fs.unlinkSync('/tmp/output.jpg')
+        } catch (e) {}
         console.timeEnd('upload')
         if (err) {
           console.error(err)
